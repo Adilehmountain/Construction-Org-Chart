@@ -87,7 +87,8 @@ html, body { height: 100%; overflow: hidden; background: var(--cream); font-fami
 .nc.dim { opacity:0.15; }
 .nc.hi  { opacity:1 !important; box-shadow:0 0 0 2px var(--copper); z-index:15; }
 .nc.dragging { box-shadow:0 8px 30px rgba(30,43,58,0.22); z-index:100; transition:none; cursor:grabbing; }
-.nc-body { display:flex; gap:9px; padding:10px 11px; height:100%; }
+.nc-body { display:flex; flex-direction:column; padding:10px 11px 9px; height:100%; }
+.nc-top { display:flex; gap:9px; flex:1 1 auto; min-height:0; }
 
 /* avatar + name caption (left column) */
 .nc-ava { width:48px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:3px; }
@@ -102,22 +103,26 @@ html, body { height: 100%; overflow: hidden; background: var(--cream); font-fami
 /* role detail (right column) */
 .nc-main { flex:1; min-width:0; display:flex; flex-direction:column; }
 .nc-dept { font-size:8.5px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--copper); margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.nc-title { font-size:12px; font-weight:600; line-height:1.25; color:var(--navy); margin-bottom:auto;
+.nc-title { font-size:12px; font-weight:600; line-height:1.25; color:var(--navy);
   display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
-.nc-foot { display:flex; align-items:center; gap:6px; margin-top:6px; }
-.nc-tog {
-  background:none; border:1px solid var(--parch); cursor:pointer; font-size:9px; font-weight:600;
-  padding:2px 7px; border-radius:999px; color:var(--slate); white-space:nowrap;
-  transition:background 0.1s, color 0.1s;
+/* Footer spans the full card width and centers the two pills as a pair, so the
+   connector (child branch) drops between them: reports pill left, AI pill right. */
+.nc-foot { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:7px; }
+/* Shared pill metrics: both pills are exactly the same fixed width */
+.nc-pill {
+  display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box;
+  width:97px; height:19px; padding:0 6px; border-radius:999px; font-size:9px; font-weight:600;
+  line-height:1; white-space:nowrap; overflow:hidden; font-family:'DM Sans',Arial,sans-serif;
+  transition:background 0.12s, color 0.12s;
 }
+/* Direct-reports pill (neutral) */
+.nc-tog { background:none; border:1px solid var(--parch); color:var(--slate); cursor:pointer; }
 .nc-tog:hover { background:rgba(30,43,58,0.07); color:var(--navy); }
-.nc-foot-none { font-size:9px; color:var(--slate); opacity:0.32; }
+.nc-pill-empty { border:1px solid var(--parch); color:var(--slate); opacity:0.5; background:none; }
 /* AI Employee pill - the one copper-accented control on each tile */
 .ai-pill {
-  display:inline-flex; align-items:center; font-size:10px; font-weight:600; line-height:1.4;
   color:var(--copper); background:rgba(193,123,78,0.10); border:1px solid var(--copper);
-  border-radius:999px; padding:2px 8px; text-decoration:none; white-space:nowrap;
-  transition:background 0.12s;
+  text-decoration:none; cursor:pointer;
 }
 .ai-pill:hover { background:rgba(193,123,78,0.20); }
 .ai-pill:focus-visible { outline:2px solid var(--copper); outline-offset:1px; }
@@ -209,6 +214,29 @@ html, body { height: 100%; overflow: hidden; background: var(--cream); font-fami
 .ctx-item { padding:7px 13px; font-size:12px; color:var(--charcoal); cursor:pointer; }
 .ctx-item:hover { background:var(--cream); color:var(--navy); }
 .ctx-sep  { height:1px; background:var(--parch); margin:3px 0; }
+
+/* CHART HEADER (title block, top center) */
+/* Title banner lives INSIDE the canvas (world coordinates) so it pans and zooms
+   with the org chart at the same rate. Centered above the CEO tile. */
+.chart-head {
+  position:absolute; left:-410px; top:-172px; width:820px;
+  text-align:center; pointer-events:none; z-index:1;
+}
+.ch-title {
+  font-family:'Playfair Display',Georgia,serif; font-weight:700;
+  font-size:34px; line-height:1.15; color:var(--navy); letter-spacing:0.01em;
+}
+.ch-accent { font-style:italic; color:var(--copper); }
+.ch-div { width:64px; height:3px; background:var(--copper); border-radius:2px; margin:11px auto; }
+.ch-sub {
+  font-family:'DM Sans',Arial,sans-serif; font-style:italic; font-weight:400;
+  font-size:15px; line-height:1.55; color:var(--slate);
+}
+.ch-note {
+  font-family:'DM Sans',Arial,sans-serif; font-size:13.5px; line-height:1.5;
+  color:var(--charcoal); margin-top:11px;
+}
+.ch-note strong { font-weight:700; color:var(--navy); }
 </style>
 </head>
 <body>
@@ -244,6 +272,13 @@ html, body { height: 100%; overflow: hidden; background: var(--cream); font-fami
   <div id="canvas">
     <svg id="svg-layer" xmlns="http://www.w3.org/2000/svg"></svg>
     <div id="node-layer"></div>
+    <!-- CHART HEADER (in-canvas, so it pans and zooms with the chart) -->
+    <div class="chart-head">
+      <div class="ch-title">The <span class="ch-accent">AI-Powered</span> Construction Company</div>
+      <div class="ch-div"></div>
+      <div class="ch-sub">&ldquo;Don't hire people to do process work. Train humans to become AI Operators to<br>build AI employees that handle the repetitive, monotonous and time consuming<br>work. Take a team of 50, and operate like a team of 250.&rdquo;</div>
+      <div class="ch-note"><strong>Click any card</strong> to explore the org. Click <strong>AI Employees</strong> and see who's really doing the work.</div>
+    </div>
   </div>
 </div>
 
@@ -1167,21 +1202,26 @@ function renderNodes() {
       el.className = 'nc';
       el.dataset.id = r.id;
       const n = (CM[r.id]||[]).length;
-      const pill = `<button type="button" class="ai-pill" data-id="${r.id}" title="${r.ai} AI employees">${r.ai} AI</button>`;
-      const foot = n
-        ? `<button class="nc-tog" data-id="${r.id}">${n} ▼</button>${pill}`
-        : `<span class="nc-foot-none">No reports</span>${pill}`;
+      const word = n===1 ? 'report' : 'reports';
+      const caret = S.collapsed.has(r.id) ? '▾' : '▴';   // down = click to open, up = click to close
+      const aiPill = `<button type="button" class="ai-pill nc-pill" data-id="${r.id}" title="${r.ai} AI employees">${r.ai} AI employees</button>`;
+      const repPill = n
+        ? `<button class="nc-tog nc-pill" data-id="${r.id}" title="${n} direct ${word} (click to expand or collapse)">${n} ${word} ${caret}</button>`
+        : `<span class="nc-pill nc-pill-empty" title="No direct reports">0 reports</span>`;
+      const foot = `${repPill}${aiPill}`;
       el.innerHTML = `
         <div class="nc-body">
-          <div class="nc-ava">
-            <div class="nc-ava-img">${avatarSVG(r)}${asgnBadge(r.tp)}</div>
-            <div class="nc-name" title="${r.name||''}">${r.name||''}</div>
+          <div class="nc-top">
+            <div class="nc-ava">
+              <div class="nc-ava-img">${avatarSVG(r)}${asgnBadge(r.tp)}</div>
+              <div class="nc-name" title="${r.name||''}">${r.name||''}</div>
+            </div>
+            <div class="nc-main">
+              <div class="nc-dept" title="${r.d}">${r.d}</div>
+              <div class="nc-title">${r.t}</div>
+            </div>
           </div>
-          <div class="nc-main">
-            <div class="nc-dept" title="${r.d}">${r.d}</div>
-            <div class="nc-title">${r.t}</div>
-            <div class="nc-foot">${foot}</div>
-          </div>
+          <div class="nc-foot">${foot}</div>
         </div>`;
       layer.appendChild(el);
       bindNode(el, r);
@@ -1192,7 +1232,7 @@ function renderNodes() {
     el.style.top  = pos.y+'px';
     el.style.display = 'block';
     const tog = el.querySelector('.nc-tog');
-    if (tog) tog.textContent = `${(CM[r.id]||[]).length} ${S.collapsed.has(r.id)?'▶':'▼'}`;
+    if (tog) { const n=(CM[r.id]||[]).length; tog.textContent = `${n} ${n===1?'report':'reports'} ${S.collapsed.has(r.id)?'▾':'▴'}`; }
   });
 
   Object.values(existing).forEach(e => e.style.display = 'none');  // cache, but hide hidden tiles
@@ -1317,6 +1357,8 @@ function toggleCollapse(id) {
     runLayout();
   }
   render();   // pan and zoom are left unchanged
+  // Expanding the CEO from the title/CEO landing frames the CEO + direct-reports view.
+  if (id==='ceo' && !S.collapsed.has('ceo')) fitView();
 }
 
 // Clears manual drag offsets and restores the guaranteed no-crossing band layout.
@@ -1606,8 +1648,10 @@ vp.addEventListener('wheel', e => {
 function fitView() {
   const ps = Object.values(S.pos); if (!ps.length) return;
   const xs = ps.map(p=>p.x), ys = ps.map(p=>p.y);
-  const minX=Math.min(...xs), maxX=Math.max(...xs)+NW;
-  const minY=Math.min(...ys), maxY=Math.max(...ys)+NH;
+  let minX=Math.min(...xs), maxX=Math.max(...xs)+NW;
+  let minY=Math.min(...ys), maxY=Math.max(...ys)+NH;
+  // Include the in-canvas title banner so it frames together with the chart.
+  minX=Math.min(minX,-410); maxX=Math.max(maxX,410); minY=Math.min(minY,-172);
   const vw=vp.clientWidth, vh=vp.clientHeight;
   const z = Math.min(0.95, Math.min(vw/(maxX-minX+80), vh/(maxY-minY+80)));
   S.zoom = z;
@@ -1637,11 +1681,25 @@ document.addEventListener('keydown', e => {
 /* ────────────────────────────────────────────────
    INIT
    ──────────────────────────────────────────────── */
-// Open fully expanded so the approved hard-coded arrangement is shown on load.
+// Opening view: title banner at the top with only the CEO card showing. Clicking the
+// CEO's down arrow expands to the CEO + direct-reports view; Expand all opens the rest.
+function landingView() {
+  const z = 0.62;                              // readable zoom for the title + CEO
+  S.zoom = z;
+  const ceo = S.pos['ceo'];
+  const cx = ceo ? ceo.x + NW/2 : 0;           // CEO center x in world coords
+  S.px = vp.clientWidth/2 - cx*z;              // center the CEO (and title) horizontally
+  S.py = 26 + 172*z;                           // place the title banner top near the view top
+  applyXform();
+}
+
+// Start collapsed at the CEO (only the CEO card visible); its reports stay collapsed too,
+// so the first expand reveals exactly the CEO + seven direct reports.
+['ceo','exec-asst','coo','cfo','cio','vp-bd','hr-dir','gen-counsel'].forEach(id => S.collapsed.add(id));
 runLayout();
 render();
 applyXform();
-setTimeout(fitView, 80);
+setTimeout(landingView, 80);
 </script>
 </body>
 </html>
